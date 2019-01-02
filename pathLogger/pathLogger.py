@@ -17,19 +17,7 @@ horizontalSectionLength = screenSize[0]/widthSections
 
 pyautogui.FAILSAFE = False
 
-#list of all possible section moves
-sectionMoveTable = list()
 
-#number of recorded section move paths
-recordedSectionMoves = dict()
-
-#initialize records of recorded moves
-for x in range(-widthSections, widthSections + 1):
-    for y in range(-heightSections,heightSections + 1):
-        sectionMoveTable.append((x,y))
-
-for move in sectionMoveTable:
-    recordedSectionMoves[move] = 0
 
 class mousePath:
     startPoint = (0,0)
@@ -202,10 +190,10 @@ def getNthLineFromFile(n, lineFile):
             return line
     return None
 
-
+#Basic testing
+"""
 logPaths = 3
 logFileName = "MousePaths.txt" 
-
 
 with open(logFileName, 'w+') as logFile:
     for x in range(logPaths):
@@ -222,4 +210,4 @@ with open(logFileName, 'r') as logFile:
         print("Playing back path ", x+1, " starting at ", retrievedPath.startPoint, " and ending at ", retrievedPath.endPoint, " in ", len(retrievedPath.pointList), " moves." )
         sleep(1)
         playBackPath(retrievedPath)
-
+"""
