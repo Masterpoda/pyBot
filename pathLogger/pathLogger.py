@@ -1,6 +1,7 @@
 from pyautogui import position, size, moveTo
 import pyautogui
 from time import perf_counter, sleep
+from ast import literal_eval as make_tuple
 
 import copy
 
@@ -13,6 +14,8 @@ widthSections = 8
 
 verticalSectionLength = screenSize[1]/heightSections
 horizontalSectionLength = screenSize[0]/widthSections
+
+pyautogui.FAILSAFE = False
 
 #list of all possible section moves
 sectionMoveTable = list()
@@ -37,6 +40,10 @@ class mousePath:
     pointList = list()
     timeList = list()
     
+    def __init__(self):
+        self.pointList = list()
+        self.timeList = list()
+
     def setStartPoint(self):
         self.startPoint = position()
         self.startSection = getSection(self.startPoint)
@@ -125,8 +132,6 @@ def buildPathList():
     return pointList, timeList
 
 
-    
-#couldnt get position to equal max dimensions. Index error will occur if this happens
 def getSection(position):
     width = int(position[0]/horizontalSectionLength)
     height = int(position[1]/verticalSectionLength)
@@ -153,22 +158,68 @@ def playBackPath(mousePath):
         sleep(time)
 
 def logPathToFile(file, path):
-    file.write(str(path.startSection) + " ")
-    file.write(str(path.endSection) + " ")
-    file.write(str(path.startPoint) + " ")
+    file.write(str(path.startSection) + "#")
+    file.write(str(path.endSection) + "#")
+    file.write(str(path.startPoint) + "#")
     for index in range(len(path.pointList) - 1):
-        file.write(str(path.pointList[index]) + " ")
-        file.write(str(path.timeList[index]) + ", ")
+        file.write(str(path.pointList[index]) + "#")
+        file.write(str(path.timeList[index]) + "#")
     file.write(str(path.endPoint) + "\n")
 
+def getPathFromFile(numPath, pathFile):
+    pathString = getNthLineFromFile(numPath, pathFile)
+    if pathString == None:
+        return mousePath()
+    return getMousePathfromString(pathString)
+
+def getMousePathfromString(pathString):
+    pathList = pathString.split('#')
+    pathObj = mousePath()
+    pathObj.startSection = make_tuple(pathList[0])
+    pathObj.endSection = make_tuple(pathList[1])
+    pathObj.startPoint = make_tuple(pathList[2])
+    pathObj.endPoint = make_tuple(pathList[-1])
+    pathList = pathList[3:-1]
+
+    for element in pathList:
+        if tryToConvert(element , float):
+            pathObj.timeList.append(float(element))
+        else:
+            pathObj.pointList.append(make_tuple(element))
+    return pathObj
+
+def tryToConvert(item, convertType):
+    try:
+        isinstance(convertType(item), convertType)
+    except:
+        return False
+    return True
+
+def getNthLineFromFile(n, lineFile):
+    lineFile.seek(0)
+    for i, line in enumerate(lineFile):
+        if i == n:
+            return line
+    return None
 
 
 logPaths = 3
 logFileName = "MousePaths.txt" 
+
+
 with open(logFileName, 'w+') as logFile:
     for x in range(logPaths):
         print("Logging ", x+1, " of ", logPaths)
         newPath = getNewMousePath()
         print("Writing ", len(newPath.pointList), " points to file.")
         logPathToFile(logFile, newPath)
+
+print("Playing back recorded paths now.")
+sleep(1)
+with open(logFileName, 'r') as logFile:
+    for x in range(logPaths):
+        retrievedPath = getPathFromFile(x, logFile)
+        print("Playing back path ", x+1, " starting at ", retrievedPath.startPoint, " and ending at ", retrievedPath.endPoint, " in ", len(retrievedPath.pointList), " moves." )
+        sleep(1)
+        playBackPath(retrievedPath)
 
