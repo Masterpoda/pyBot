@@ -9,11 +9,13 @@ screenSize = size()
 
 #screen is divided into 8x4 'Sections'
 #5-10 mouse movements representing each permutation of one section to another are recorded
-heightSections = 4
-widthSections = 8
+heightSections = 3
+widthSections = 3
 
 verticalSectionLength = screenSize[1]/heightSections
 horizontalSectionLength = screenSize[0]/widthSections
+
+logFileName = "MousePaths.txt" 
 
 pyautogui.FAILSAFE = False
 
@@ -160,6 +162,21 @@ def getPathFromFile(numPath, pathFile):
         return mousePath()
     return getMousePathfromString(pathString)
 
+def getPathDataFromFile(numPath, pathFile):
+    pathString = getNthLineFromFile(numPath, pathFile)
+    if pathString == None:
+        return mousePath()
+    return getMousePathfromString(pathString)
+
+def getMousePathSectionDataFromString(pathString):
+    pathList = pathString.split('#')
+    pathObj = mousePath()
+    pathObj.startSection = make_tuple(pathList[0])
+    pathObj.endSection = make_tuple(pathList[1])
+    pathObj.startPoint = make_tuple(pathList[2])
+    pathObj.endPoint = make_tuple(pathList[-1])
+    return pathObj
+
 def getMousePathfromString(pathString):
     pathList = pathString.split('#')
     pathObj = mousePath()
@@ -191,10 +208,10 @@ def getNthLineFromFile(n, lineFile):
     return None
 
 #Basic testing
-"""
-logPaths = 3
-logFileName = "MousePaths.txt" 
 
+logPaths = 3
+
+"""
 with open(logFileName, 'w+') as logFile:
     for x in range(logPaths):
         print("Logging ", x+1, " of ", logPaths)
@@ -210,4 +227,5 @@ with open(logFileName, 'r') as logFile:
         print("Playing back path ", x+1, " starting at ", retrievedPath.startPoint, " and ending at ", retrievedPath.endPoint, " in ", len(retrievedPath.pointList), " moves." )
         sleep(1)
         playBackPath(retrievedPath)
+
 """
