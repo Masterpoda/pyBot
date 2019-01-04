@@ -15,7 +15,7 @@ widthSections = 3
 verticalSectionLength = screenSize[1]/heightSections
 horizontalSectionLength = screenSize[0]/widthSections
 
-logFileName = "MousePaths.txt" 
+logFileName = r'MousePaths.txt' 
 
 pyautogui.FAILSAFE = False
 
@@ -153,7 +153,7 @@ def logPathToFile(file, path):
     file.write(str(path.startPoint) + "#")
     for index in range(len(path.pointList) - 1):
         file.write(str(path.pointList[index]) + "#")
-        file.write(str(path.timeList[index]) + "#")
+        file.write("{0:.4f}".format(path.timeList[index]) + "#")
     file.write(str(path.endPoint) + "\n")
 
 def getPathFromFile(numPath, pathFile):

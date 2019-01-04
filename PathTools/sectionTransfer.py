@@ -34,9 +34,15 @@ def populateUsingFile(fileObj):
         currPath = pathLogger.getPathFromFile(pathNum, fileObj)
 
 def getTransferFromPath(path):
+    return getTransferFromSections(
+        path.startSection,
+        path.endSection
+    )
+
+def getTransferFromSections(start, end):
     return (
-        path.endSection[0] - path.startSection[0],
-        path.endSection[1] - path.startSection[1]
+        end[0] - start[0],
+        end[1] - start[1]
     )
 
 def getNumDiscoveredPaths():
@@ -56,8 +62,13 @@ def playbackTransferRandom(transfer, pathFile):
     pathToPlayback = pathLogger.getPathFromFile(randomChoice(transferList), pathFile)
     pathLogger.playBackPath(pathToPlayback)
 
+def getRandomPathFromTransfer(transfer):
+    transferList = recordedSectionTransfer[transfer]
+    with open(pathLogger.logFileName, 'r') as pathFile:
+        return pathLogger.getPathFromFile(randomChoice(transferList), pathFile)
+
 def addNewPaths():
-    print("we will create ", pathsPerTransfer, " paths for ", len(sectionTransferList), "transfers")
+    print("we must create ", pathsPerTransfer, " paths for ", len(sectionTransferList), " transfers")
     #populate transfer records from the mousPaths file
     with open(pathLogger.logFileName, 'r') as pathfile:
         populateUsingFile(pathfile)
@@ -78,18 +89,8 @@ def addNewPaths():
         
         nexTran = getNextNeededTransfer()
 
-print("Populating...")
 with open(pathLogger.logFileName, 'r') as pathfile:
             populateUsingFile(pathfile)
 
-print("Playing 0,0 transfer")
-with open(pathLogger.logFileName, 'r') as pathfile:
-    playbackTransferRandom((0,0), pathfile)
-
-sleep(1)
-
-print("Playing 1,0 transfer")
-with open(pathLogger.logFileName, 'r') as pathfile:
-    playbackTransferRandom((1,0), pathfile)
-
-sleep(1)
+if getNextNeededTransfer() != nullTransfer:
+    addNewPaths()
