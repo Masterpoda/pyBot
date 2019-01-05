@@ -67,6 +67,7 @@ def getRandomPathFromTransfer(transfer):
     with open(pathLogger.logFileName, 'r') as pathFile:
         return pathLogger.getPathFromFile(randomChoice(transferList), pathFile)
 
+
 def addNewPaths():
     print("we must create ", pathsPerTransfer, " paths for ", len(sectionTransferList), " transfers")
     #populate transfer records from the mousPaths file

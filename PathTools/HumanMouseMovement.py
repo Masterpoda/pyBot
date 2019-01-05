@@ -1,6 +1,7 @@
 import sys
 
-from pyautogui import position, size
+from time import sleep
+from pyautogui import position, size, moveTo
 from pathLogger import getSection, manhattanDist, verticalSectionLength, horizontalSectionLength, playBackPath
 from sectionTransfer import getTransferFromSections
 from sectionTransfer import getRandomPathFromTransfer as getPath 
@@ -25,26 +26,37 @@ def pointSum(point1, point2):
     )
 
 def applyOffsetToPath(path, offset):
-    for point in path.pointList:
-        point = pointSum(point, offset)
     path.startPoint = pointSum(path.startPoint, offset)
+    for index in range(len(path.pointList)):
+        path.pointList[index] = pointSum(path.pointList[index], offset)
     path.endPoint = pointSum(path.endPoint, offset)
     path.startSection = getSection(path.startPoint)
     path.endSection = getSection(path.endPoint)
     return path
 
-def applyTransformToPoint(xScale, yScale, fixedPoint, pointToTransform):
+def applyShearTransformToPoint(xScale, yScale, fixedPoint, tPoint):
     return (
-        int(pointToTransform[0]*xScale + (1 - xScale)*fixedPoint[0]),
-        int(pointToTransform[1]*yScale + (1 - yScale)*fixedPoint[1])
+        int(tPoint[0] + xScale * (tPoint[1] - fixedPoint[1])),
+        int(yScale*(tPoint[0]-fixedPoint[0]) + xScale*(tPoint[1] - fixedPoint[1]) + tPoint[1])
     )
 
-def applyTransformToPath(xScale, yScale, fixedPoint, path):
+def applyShearTransformToPath(xScale, yScale, fixedPoint, path):
     for index in range(len(path.pointList)):
-        path.pointList[index] = applyTransformToPoint(xScale, yScale, fixedPoint, path.pointList[index])
-    path.endPoint = applyTransformToPoint(xScale, yScale, fixedPoint, path.endPoint)
+        path.pointList[index] = applyShearTransformToPoint(xScale, yScale, fixedPoint, path.pointList[index])
+    path.endPoint = applyShearTransformToPoint(xScale, yScale, fixedPoint, path.endPoint)
     return path
 
+
+def shearPathToPoint(path, goalPoint):
+    x = path.endPoint[0]
+    xG = goalPoint[0]
+    y = path.endPoint[1]
+    yG = goalPoint[1]
+    x0 = path.startPoint[0]
+    y0 = path.startPoint[1]
+    xScale = (xG - x)/(y-y0)
+    yScale = (yG - y - xScale*(y-y0))/(x-x0)
+    return applyShearTransformToPath(xScale, yScale, path.startPoint, path)
 
 def getPathToPoint(goalPoint):
     currPoint = position()
@@ -54,22 +66,40 @@ def getPathToPoint(goalPoint):
         transfer = (0,0)
     else:
         transfer = getTransferFromSections(getSection(currPoint), getSection(goalPoint))
-    
-    pathToPoint = getPath(transfer)
-    startDiff = pointDiff(pathToPoint.startPoint, currPoint)
-    applyOffsetToPath(pathToPoint, startDiff)
 
-    pathDiff = pointDiff(pathToPoint.endPoint, pathToPoint.startPoint)
-    endPointDiff = pointDiff(goalPoint, pathToPoint.startPoint)
-    xScaleFactor = pathDiff[0]/endPointDiff[0]
-    yScaleFactor = pathDiff[1]/endPointDiff[1]
+    pathToPoint = getPath(transfer)
+    startDiff = (0,0)#pointDiff(currPoint, pathToPoint.startPoint)
+
+    #ensure start points match
+    pathToPoint = applyOffsetToPath(pathToPoint, startDiff)
+
+    if(pathToPoint.startPoint != position()[0]):
+        print("paths don't match")
+    else:
+        print("paths match")
 
     #Start point of path is the "Fixed point"
-    return applyTransformToPath(xScaleFactor, yScaleFactor, pathToPoint.startPoint, pathToPoint)
+    return shearPathToPoint(pathToPoint, goalPoint)
+
+
+
+"""
+testpath = getPath((0,-1))
+print("Playing back random path...")
+playBackPath(testpath)
+sleep(1)
+moveTo(testpath.startPoint)
+
+
+print("Playing back sheared path...")
+sleep(1)
+testpath = shearPathToPoint(testpath, (100, 100))
+playBackPath(testpath)
+
 
 """
 def getDiamondpoints():
-    width = size()[0]/2
+    width = size()[0]
     height = size()[1]
     return(
         (width*0.5, height*0.75),
@@ -78,7 +108,10 @@ def getDiamondpoints():
         (width*0.75, height*0.5),
         (width*0.5, height*0.75)
     )
+print(size())
+print(getDiamondpoints())
 
 for dPoint in getDiamondpoints():
-    playBackPath(getPathToPoint(dPoint))
-"""
+    moveTo(dPoint)
+    #playBackPath(getPathToPoint(dPoint))
+    sleep(1)
