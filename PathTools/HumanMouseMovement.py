@@ -2,9 +2,9 @@ import sys
 
 from time import sleep
 from pyautogui import position, size, moveTo
-from pathLogger import getSection, manhattanDist, verticalSectionLength, horizontalSectionLength, playBackPath
-from sectionTransfer import getTransferFromSections
-from sectionTransfer import getRandomPathFromTransfer as getPath 
+from pathLogger import getSection, verticalSectionLength, horizontalSectionLength, playBackPath
+from sectionTransfer import getTransferFromSections, getTransferFromPoints
+from sectionTransfer import getRandomPathFromTransfer as getPathFromTransfer
 
 minSecLength = min(verticalSectionLength, horizontalSectionLength)
 
@@ -54,64 +54,69 @@ def shearPathToPoint(path, goalPoint):
     yG = goalPoint[1]
     x0 = path.startPoint[0]
     y0 = path.startPoint[1]
-    xScale = (xG - x)/(y-y0)
-    yScale = (yG - y - xScale*(y-y0))/(x-x0)
+    xScale = 0
+    yScale = 0
+
+    if (y-y0) != 0:
+        xScale = (xG - x)/(y-y0)
+    if (x - x0) != 0:
+        yScale = (yG - y - xScale*(y-y0))/(x-x0)
+    
     return applyShearTransformToPath(xScale, yScale, path.startPoint, path)
+
+def MovePathToStartPoint(path, newStartPoint):
+    startDiff = pointDiff(newStartPoint, path.startPoint)
+    path = applyOffsetToPath(path, startDiff)
+    return path
 
 def getPathToPoint(goalPoint):
     currPoint = position()
     
-    #prevent small movements that cross section boundaries from being causing highly distorted.
+    #prevent small movements that cross section boundaries from being highly distorted by shear.
     if pythagoranDist(goalPoint, currPoint) < 0.5 * minSecLength:
         transfer = (0,0)
     else:
-        transfer = getTransferFromSections(getSection(currPoint), getSection(goalPoint))
+        transfer = getTransferFromPoints(currPoint, goalPoint)
 
-    pathToPoint = getPath(transfer)
-    startDiff = (0,0)#pointDiff(currPoint, pathToPoint.startPoint)
-
-    #ensure start points match
-    pathToPoint = applyOffsetToPath(pathToPoint, startDiff)
-
-    if(pathToPoint.startPoint != position()[0]):
-        print("paths don't match")
-    else:
-        print("paths match")
+    pathToPoint = getPathFromTransfer(transfer)
+    pathToPoint = MovePathToStartPoint(pathToPoint, currPoint)
 
     #Start point of path is the "Fixed point"
     return shearPathToPoint(pathToPoint, goalPoint)
 
 
-
-"""
-testpath = getPath((0,-1))
-print("Playing back random path...")
-playBackPath(testpath)
-sleep(1)
-moveTo(testpath.startPoint)
-
-
-print("Playing back sheared path...")
-sleep(1)
-testpath = shearPathToPoint(testpath, (100, 100))
-playBackPath(testpath)
-
-
-"""
-def getDiamondpoints():
+def getDiamondPoints():
     width = size()[0]
     height = size()[1]
     return(
-        (width*0.5, height*0.75),
-        (width*0.25, height*0.5),
-        (width*0.5, height*0.25),
-        (width*0.75, height*0.5),
-        (width*0.5, height*0.75)
+        (int(width*0.5), int(height*0.75)),
+        (int(width*0.25), int(height*0.5)),
+        (int(width*0.5), int(height*0.25)),
+        (int(width*0.75), int(height*0.5)),
+        (int(width*0.5), int(height*0.75))
     )
-print(size())
-print(getDiamondpoints())
 
-for dPoint in getDiamondpoints():
-    moveTo(dPoint)
-    #playBackPath(getPathToPoint(dPoint))
-    sleep(1)
+def getSquarePoints():
+    return(
+        (int(width*0.75), int(height*0.75)),
+        (int(width*0.25), int(height*0.75)),
+        (int(width*0.25), int(height*0.25)),
+        (int(width*0.75), int(height*0.25)),
+        (int(width*0.75), int(height*0.75))
+    )
+
+for x in range(5):
+    for dPoint in getDiamondPoints():
+        print("Transfer: ", getTransferFromPoints(position(), dPoint))
+        playBackPath(getPathToPoint(dPoint))
+        print("Goal was: ", dPoint, " Landed at ", position())
+        sleep(1)
+
+for x in range(5):
+    for dPoint in getSquarePoints():
+        print("Transfer: ", getTransferFromPoints(position(), dPoint))
+        playBackPath(getPathToPoint(dPoint))
+        print("Goal was: ", dPoint, " Landed at ", position())
+        sleep(1)
+
+

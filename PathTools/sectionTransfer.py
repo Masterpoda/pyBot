@@ -45,6 +45,12 @@ def getTransferFromSections(start, end):
         end[1] - start[1]
     )
 
+def getTransferFromPoints(startPoint, endPoint):
+    return getTransferFromSections(
+        pathLogger.getSection(startPoint), 
+        pathLogger.getSection(endPoint)
+        )
+
 def getNumDiscoveredPaths():
     pathCount = 0
     for transfer, fileIndexList in recordedSectionTransfer.items():

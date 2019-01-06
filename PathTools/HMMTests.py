@@ -1,5 +1,6 @@
 import HumanMouseMovement as HMM
 from pathLogger import mousePath
+from pyautogui import position, size
 import unittest
 import copy
 
@@ -34,15 +35,16 @@ class PointMathTests(unittest.TestCase):
 
     def test_ApplyOffsetToPath(self):
         offset = (-1, 2)
-        path = HMM.getPath((0,0))
+        path = HMM.getPathFromTransfer((0,0))
         pathcopy = copy.deepcopy(path)
 
         HMM.applyOffsetToPath(path, offset)
 
         self.assertEqual(path.startPoint, HMM.pointSum(pathcopy.startPoint, offset))
         for index in range(len(path.pointList)):
-            self.assertEqual(path.pointList[index], HMM.pointSum(pathcopy.pointList[index], offset))
+            self.assertEqual(path.pointList[index], (pathcopy.pointList[index][0] + offset[0], pathcopy.pointList[index][1] + offset[1]))
         self.assertEqual(path.endPoint, HMM.pointSum(pathcopy.endPoint, offset))
+
     
     def test_ApplyShearTransformOrigin(self):
         testPath = mousePath()
@@ -54,6 +56,30 @@ class PointMathTests(unittest.TestCase):
         actual = HMM.shearPathToPoint(testPath, goalPoint).endPoint
 
         self.assertEqual(actual, expected)
+
+    def test_MovePathToStartPoint(self):
+        testPath = HMM.getPathFromTransfer((1,1))
+        screenSize = size()
+        newStartPoint = (int(screenSize[0]/2), int(screenSize[1]/2))
+        expected = newStartPoint
+
+        actual = HMM.MovePathToStartPoint(testPath, newStartPoint).startPoint
+
+        self.assertEqual(actual, expected)
+
+    def test_GetPathToPoint(self):
+        goalPoint = (100, 100)
+        expectedEndPoint = goalPoint
+        
+        
+        goalPath = HMM.getPathToPoint(goalPoint)
+        expectedStartPoint = position()
+        actualStartPoint = goalPath.startPoint
+        actualEndPoint = goalPath.endPoint
+
+        self.assertEqual(actualStartPoint, expectedStartPoint)
+        self.assertEqual(actualEndPoint, expectedEndPoint)
+
 
 
 
