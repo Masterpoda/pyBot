@@ -3,6 +3,7 @@
 #moves from one section to another, e.g. up 2, left 3, etc.)
 
 import pathLogger
+import os.path
 from random import choice as randomChoice
 from time import sleep
 
@@ -96,7 +97,11 @@ def addNewPaths():
         
         nexTran = getNextNeededTransfer()
 
-with open(pathLogger.logFileName, 'r') as pathfile:
+if os.path.isfile(pathLogger.logFileName):
+    with open(pathLogger.logFileName, 'r') as pathfile:
+            populateUsingFile(pathfile)
+else:
+    with open(pathLogger.logFileName, "w+") as pathfile:
             populateUsingFile(pathfile)
 
 if getNextNeededTransfer() != nullTransfer:

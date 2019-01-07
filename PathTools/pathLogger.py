@@ -15,7 +15,7 @@ widthSections = 3
 verticalSectionLength = screenSize[1]/heightSections
 horizontalSectionLength = screenSize[0]/widthSections
 
-logFileName = r'MousePaths.txt' 
+logFileName = "MousePaths_" + str(size()[0]) + "x" + str(size()[1]) +".txt" 
 
 pyautogui.FAILSAFE = False
 

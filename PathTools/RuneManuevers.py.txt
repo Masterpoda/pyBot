@@ -1,0 +1,2 @@
+compassCenter = (1735, 79)
+compassRadius = 14
